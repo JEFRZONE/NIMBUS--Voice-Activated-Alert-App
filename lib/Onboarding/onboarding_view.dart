@@ -20,8 +20,9 @@ class _OnboardingViewState extends State<OnboardingView> {
 
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       bottomSheet: Container(
-        color: primaryColor,
+        color: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 10,vertical: 10),
         child: isLastPage? getStarted() : Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -37,7 +38,7 @@ class _OnboardingViewState extends State<OnboardingView> {
                     controller: pageController,
                     count: controller.items.length,
                     onDotClicked: (index)=> pageController.animateToPage(index,
-                        duration: const Duration(milliseconds: 600), curve: Curves.easeIn),
+                        duration: const Duration(milliseconds: 50), curve: Curves.easeIn),
                     effect: const WormEffect(
                       dotHeight: 12,
                       dotWidth: 12,
@@ -60,24 +61,46 @@ class _OnboardingViewState extends State<OnboardingView> {
             children: [
             
             PageView.builder(
-                onPageChanged: (index)=> setState(()=> isLastPage = controller.items.length-1 == index),
-                itemCount: controller.items.length,
-                controller: pageController,
-                itemBuilder: (context,index){
-                  return Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Image.asset(controller.items[index].image),
-                      const SizedBox(height: 15),
-                      Text(controller.items[index].title,
-                        style: const TextStyle(fontSize: 30,fontWeight: FontWeight.bold),),
-                      const SizedBox(height: 15),
-                      Text(controller.items[index].descriptions,
-                          style: const TextStyle(color: Color.fromARGB(255, 63, 63, 63),fontSize: 17), textAlign: TextAlign.center),
-                    ],
-                  );
-
-                }),
+  onPageChanged: (index)=> setState(()=> isLastPage = controller.items.length-1 == index),
+  itemCount: controller.items.length,
+  controller: pageController,
+  itemBuilder: (context,index){
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Stack(
+          children: [
+            Container(
+              height: 600, // adjust the height to your liking
+              width: double.infinity,
+              child: Image.asset(controller.items[index].image),
+            ),
+            Positioned(
+              top: 1, // adjust the top value to your liking
+              left: 165, // adjust the left value to your liking
+              child: Container(
+                height: 100, // adjust the height to your liking
+                width: 100, // adjust the width to your liking
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  image: DecorationImage(
+                    image: AssetImage('assets/images/nimbus1.png'),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 15),
+        Text(controller.items[index].title,
+          style: const TextStyle(fontSize: 30,fontWeight: FontWeight.bold),),
+        const SizedBox(height: 15),
+        Text(controller.items[index].descriptions,
+          style: const TextStyle(color: Colors.black,fontSize: 17), textAlign: TextAlign.center),
+      ],
+    );
+  }),
             ],
             ),
         ),
@@ -106,7 +129,7 @@ class _OnboardingViewState extends State<OnboardingView> {
             //After we press get started button this onboarding value become true
             // same key
             if(!mounted)return;
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>MyHomePage()));
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>HomePage()));
           },
           child: const Text("Get started",style: TextStyle(color: Colors.white),)),
     );
