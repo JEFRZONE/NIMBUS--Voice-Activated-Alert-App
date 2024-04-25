@@ -6,10 +6,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   final onboarding = false;
 
-  runApp( MyApp(onboarding: onboarding));
+  runApp(MyApp(onboarding: onboarding));
 }
 
 class MyApp extends StatelessWidget {
@@ -22,11 +22,11 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
-
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 20, 102, 197)),
+        colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color.fromARGB(255, 20, 102, 197)),
         useMaterial3: true,
       ),
-      home: onboarding?  HomePage() : const OnboardingView(),
+      home: onboarding ? HomePage() : const OnboardingView(),
     );
   }
 }
