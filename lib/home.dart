@@ -59,48 +59,7 @@ class _HomePageState extends State<HomePage> {
 
   
 
- 
-  void _triggerVoiceRecognition() {
-  _startListening(); // Start voice recognition
-}
-
-  void _startListening() async {
-    await _speechToText.listen(
-      onResult: _onSpeechResult,
-      listenFor: Duration(seconds: 0), // Listen for a minute
-    );
-  }
-
-  void _stopListening() async {
-    await _speechToText.stop();
-  }
-
-  Future<void> _onSpeechResult(SpeechRecognitionResult result) async {
-    var flutterTts = FlutterTts();
-    _lastWords = result.recognizedWords.toString().toLowerCase();
-
-    if (_lastWords.contains("hello") || _lastWords.contains('help')) {
-      flutterTts.speak("We are sending help");
-    } else if (_lastWords.contains('stop')) {
-      _stopListening();
-      flutterTts.speak("Stopped");
-    }
-  }
-
-
-  @override
-  void initState() {
-    super.initState();
-    _getCurrentLocation(); // Fetch location on app launch
-     
-    _initSpeech(); // Initialize speech recognition
-  }
-
-  Future<void> _initSpeech() async {
-    await _speechToText.initialize(); // Initialize speech recognition
-  }
-
-   void _navigateToNotificationsPage(BuildContext context) {
+  void _navigateToNotificationsPage(BuildContext context) {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => NotificationsPage()),
@@ -135,6 +94,45 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  void _triggerVoiceRecognition() {
+  _startListening(); // Start voice recognition
+}
+
+  void _startListening() async {
+    await _speechToText.listen(
+      onResult: _onSpeechResult,
+      listenFor: Duration(seconds: 10), // Listen for a minute
+    );
+  }
+
+  void _stopListening() async {
+    await _speechToText.stop();
+  }
+
+  Future<void> _onSpeechResult(SpeechRecognitionResult result) async {
+    var flutterTts = FlutterTts();
+    _lastWords = result.recognizedWords.toString().toLowerCase();
+
+    if (_lastWords.contains("hello") || _lastWords.contains('help')) {
+      flutterTts.speak("We are sending help");
+    } else if (_lastWords.contains('stop')) {
+      _stopListening();
+      flutterTts.speak("Stopped");
+    }
+  }
+
+
+  @override
+  void initState() {
+    super.initState();
+    _getCurrentLocation(); // Fetch location on app launch
+     
+    _initSpeech(); // Initialize speech recognition
+  }
+
+  Future<void> _initSpeech() async {
+    await _speechToText.initialize(); // Initialize speech recognition
+  }
 
   @override
   Widget build(BuildContext context) {
