@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_application_3/pages/Voicetrigger.dart';
+import 'dart:io';
+import 'dart:convert';
 import 'package:geocoding/geocoding.dart'; // Import for reverse geocoding
 import 'package:geolocator/geolocator.dart';
-import 'pages/notification.dart';
-import 'pages/settings.dart';
 import 'pages/customize.dart';
 import 'pages/emergencycontact.dart';
-import 'pages/recentalerts.dart';
-import 'pages/profile.dart';
 import 'package:flutter_tts/flutter_tts.dart'; // Import for text-to-speech
 import 'package:speech_to_text/speech_recognition_result.dart'; // Import for speech recognition result
 import 'package:speech_to_text/speech_to_text.dart';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 
 class HomePage extends StatefulWidget {
@@ -25,6 +22,9 @@ class _HomePageState extends State<HomePage> {
   String _lastWords = '';
   String _currentLocation = 'Locating...';
   String _cityName = ''; // Add state variable for city name
+  
+
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   Future<void> _getCurrentLocation() async {
     try {
@@ -33,7 +33,6 @@ class _HomePageState extends State<HomePage> {
         forceAndroidLocationManager: true,
       );
 
-      // Reverse geocoding to get city name
       final placemarks = await placemarkFromCoordinates(
         position.latitude,
         position.longitude,
@@ -43,8 +42,9 @@ class _HomePageState extends State<HomePage> {
         setState(() {
           _currentLocation =
               '${position.latitude.toStringAsFixed(2)}, ${position.longitude.toStringAsFixed(2)}';
-          _cityName = placemark.locality ?? 'Unknown'; // Handle cases where locality is unavailable
+          _cityName = placemark.locality ?? 'Unknown';
         });
+        await _saveLocation(position.latitude, position.longitude);
       } else {
         setState(() {
           _currentLocation = 'Location error';
@@ -57,13 +57,38 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  
+ Future<void> _saveLocation(double latitude, double longitude) async {
+  try {
+    // Query the collection to get the document ID of the existing location
+    QuerySnapshot snapshot = await _firestore.collection('Location').get();
+    snapshot.docs.forEach((doc) async {
+      await _firestore.collection('Location').doc(doc.id).delete();
+    });
 
-  void _navigateToNotificationsPage(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => NotificationsPage()),
-    );
+    // Add the new location
+    GeoPoint location = GeoPoint(latitude, longitude);
+    await _firestore.collection('Location').add({
+      'Address': location,
+      
+    });
+    print('Location saved successfully: $latitude, $longitude');
+  } catch (e) {
+    print('Error saving location: $e');
+  }
+}
+
+  final String serverIp = '192.168.1.12'; // Replace with your PC's IP address
+  final int serverPort = 12345;
+  Future<void> triggerPythonScript() async {
+    try {
+      Socket socket = await Socket.connect(serverIp, serverPort);
+      print('Connected to server');
+      socket.write('Run Python Script');
+      await socket.flush();
+      socket.close();
+    } catch (e) {
+      print('Error connecting to server: $e');
+    }
   }
 
   void _navigateToEmergencyContactPage(BuildContext context) {
@@ -73,19 +98,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _navigateToRecentAlertsPage(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => RecentAlertsPage()),
-    );
-  }
-
-  void _navigateToSettingsPage(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => SettingsPage()),
-    );
-  }
 
   void _navigateToCustomizePage(BuildContext context) {
     Navigator.push(
@@ -93,40 +105,50 @@ class _HomePageState extends State<HomePage> {
       MaterialPageRoute(builder: (context) => Register()),
     );
   }
+bool _isListening = false; // Add a flag to track if voice recognition is active
 
-  void _triggerVoiceRecognition() {
-  _startListening(); // Start voice recognition
+void _triggerVoiceRecognition() {
+  if (!_isListening) {
+    _startListening(); // Start voice recognition only if not already listening
+  } else {
+    _stopListening(); // Stop voice recognition if already listening
+  }
 }
 
-  void _startListening() async {
-    await _speechToText.listen(
-      onResult: _onSpeechResult,
-      listenFor: Duration(seconds: 10), // Listen for a minute
-    );
+void _startListening() async {
+  setState(() {
+    _isListening = true; // Set the flag to indicate that voice recognition is active
+  });
+  await _speechToText.listen(
+    onResult: _onSpeechResult,
+    listenFor: Duration(seconds: 0), // Listen indefinitely until stopped
+  );
+}
+
+void _stopListening() async {
+  setState(() {
+    _isListening = false; // Set the flag to indicate that voice recognition is inactive
+  });
+  await _speechToText.stop();
+}
+
+  void _onSpeechResult(SpeechRecognitionResult result) async {
+  var flutterTts = FlutterTts();
+  _lastWords = result.recognizedWords.toString().toLowerCase();
+
+  if (_lastWords.contains("hello") || _lastWords.contains('help')) {
+    flutterTts.speak("We are sending help");
+  } else if (_lastWords.contains('stop')) {
+    _stopListening();
+    flutterTts.speak("Stopped");
   }
-
-  void _stopListening() async {
-    await _speechToText.stop();
-  }
-
-  Future<void> _onSpeechResult(SpeechRecognitionResult result) async {
-    var flutterTts = FlutterTts();
-    _lastWords = result.recognizedWords.toString().toLowerCase();
-
-    if (_lastWords.contains("hello") || _lastWords.contains('help')) {
-      flutterTts.speak("We are sending help");
-    } else if (_lastWords.contains('stop')) {
-      _stopListening();
-      flutterTts.speak("Stopped");
-    }
-  }
-
+}
 
   @override
   void initState() {
     super.initState();
     _getCurrentLocation(); // Fetch location on app launch
-     
+
     _initSpeech(); // Initialize speech recognition
   }
 
@@ -138,25 +160,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.blue[800],
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.blue,
-        selectedItemColor: Colors.white,
-        items: [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.person), label: 'Profile'), // Added profile entry
-        ],
-        onTap: (index) {
-          // Handle navigation based on the tapped index
-          if (index == 0) {
-            // Navigate to home page
-          } else if (index == 1) {
-            // Navigate to profile page
-            Navigator.push(
-                context, MaterialPageRoute(builder: (context) => ProfilePage()));
-          }
-        },
-      ),
+      
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -191,7 +195,9 @@ class _HomePageState extends State<HomePage> {
                             ),
                             SizedBox(width: 1),
                             Text(
-                              _cityName.isNotEmpty ? '$_cityName' : _currentLocation,
+                              _cityName.isNotEmpty
+                                  ? '$_cityName'
+                                  : _currentLocation,
                               style: TextStyle(
                                 fontSize: 18,
                                 color: Colors.blue[100],
@@ -202,7 +208,8 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                     GestureDetector(
-                     onTap: _triggerVoiceRecognition, // Start voice recognition when mic button is tapped
+                      onTap:
+                          _triggerVoiceRecognition, // Start voice recognition when mic button is tapped
                       child: Container(
                         decoration: BoxDecoration(
                           color: Colors.blue[600],
@@ -218,10 +225,10 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ],
                 ),
-                 SizedBox(height: 30),
+                SizedBox(height: 30),
                 GestureDetector(
                   onTap: () {
-                    _navigateToNotificationsPage(context);
+                    triggerPythonScript();
                   },
                   child: Container(
                     decoration: BoxDecoration(
@@ -250,14 +257,16 @@ class _HomePageState extends State<HomePage> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 30, vertical: 50),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 30, vertical: 50),
                           child: Align(
                             alignment: Alignment.topLeft,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
                                       'Emergency Contacts',
@@ -270,7 +279,8 @@ class _HomePageState extends State<HomePage> {
                                       children: [
                                         GestureDetector(
                                           onTap: () {
-                                            _navigateToEmergencyContactPage(context);
+                                            _navigateToEmergencyContactPage(
+                                                context);
                                           },
                                           child: Icon(
                                             Icons.add,
@@ -280,7 +290,8 @@ class _HomePageState extends State<HomePage> {
                                         SizedBox(width: 10),
                                         GestureDetector(
                                           onTap: () {
-                                            _navigateToEmergencyContactPage(context);
+                                            _navigateToEmergencyContactPage(
+                                                context);
                                           },
                                           child: Icon(
                                             Icons.edit,
@@ -297,22 +308,27 @@ class _HomePageState extends State<HomePage> {
                                     Expanded(
                                       child: GestureDetector(
                                         onTap: () {
-                                          _navigateToEmergencyContactPage(context);
+                                          _navigateToEmergencyContactPage(
+                                              context);
                                         },
                                         child: Container(
                                           height: 100,
                                           decoration: BoxDecoration(
                                             color: Colors.blue[600],
-                                            borderRadius: BorderRadius.circular(12),
+                                            borderRadius:
+                                                BorderRadius.circular(12),
                                           ),
                                           child: Column(
-                                            mainAxisAlignment: MainAxisAlignment.end,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.end,
                                             children: [
                                               IconButton(
                                                 onPressed: () {
-                                                  _navigateToEmergencyContactPage(context);
+                                                  _navigateToEmergencyContactPage(
+                                                      context);
                                                 },
-                                                icon: Icon(Icons.add_alert, color: Colors.white),
+                                                icon: Icon(Icons.add_alert,
+                                                    color: Colors.white),
                                               ),
                                               SizedBox(height: 8),
                                               Text(
@@ -331,22 +347,27 @@ class _HomePageState extends State<HomePage> {
                                     Expanded(
                                       child: GestureDetector(
                                         onTap: () {
-                                          _navigateToEmergencyContactPage(context);
+                                          _navigateToEmergencyContactPage(
+                                              context);
                                         },
                                         child: Container(
                                           height: 100,
                                           decoration: BoxDecoration(
                                             color: Colors.blue[600],
-                                            borderRadius: BorderRadius.circular(12),
+                                            borderRadius:
+                                                BorderRadius.circular(12),
                                           ),
                                           child: Column(
-                                            mainAxisAlignment: MainAxisAlignment.end,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.end,
                                             children: [
                                               IconButton(
                                                 onPressed: () {
-                                                  _navigateToEmergencyContactPage(context);
+                                                  _navigateToEmergencyContactPage(
+                                                      context);
                                                 },
-                                                icon: Icon(Icons.edit, color: Colors.white),
+                                                icon: Icon(Icons.edit,
+                                                    color: Colors.white),
                                               ),
                                               SizedBox(height: 8),
                                               Text(
@@ -369,215 +390,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                     ),
-                    SizedBox(height: 20),
-                    // Recent Alerts Tile
-                    GestureDetector(
-                      onTap: () {
-                        _navigateToRecentAlertsPage(context);
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 30, vertical: 50),
-                          child: Align(
-                            alignment: Alignment.topLeft,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      'Alerts',
-                                      style: TextStyle(
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    Row(
-                                      children: [
-                                        GestureDetector(
-                                          onTap: () {
-                                            _navigateToRecentAlertsPage(context);
-                                          },
-                                          child: Icon(
-                                            Icons.notifications,
-                                            color: Colors.blue,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: 20),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          _navigateToRecentAlertsPage(context);
-                                        },
-                                        child: Container(
-                                          height: 100,
-                                          decoration: BoxDecoration(
-                                            color: Colors.blue[600],
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          child: Column(
-                                            mainAxisAlignment: MainAxisAlignment.end,
-                                            children: [
-                                              IconButton(
-                                                onPressed: () {
-                                                  _navigateToRecentAlertsPage(context);
-                                                },
-                                                icon: Icon(Icons.notifications_active, color: Colors.white),
-                                              ),
-                                              SizedBox(height: 8),
-                                              Text(
-                                                'Current alerts',
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(width: 20),
-                                    Expanded(
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          _navigateToRecentAlertsPage(context);
-                                        },
-                                        child: Container(
-                                          height: 100,
-                                          decoration: BoxDecoration(
-                                            color: Colors.blue[600],
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          child: Column(
-                                            mainAxisAlignment: MainAxisAlignment.end,
-                                            children: [
-                                              IconButton(
-                                                onPressed: () {
-                                                  _navigateToRecentAlertsPage(context);
-                                                },
-                                                icon: Icon(Icons.history, color: Colors.white),
-                                              ),
-                                              SizedBox(height: 8),
-                                              Text(
-                                                'Recent Alerts',
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 20),
-                    // Settings Tile
-                    GestureDetector(
-                      onTap: () {
-                        _navigateToSettingsPage(context);
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 30, vertical: 50),
-                          child: Align(
-                            alignment: Alignment.topLeft,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      'Settings',
-                                      style: TextStyle(
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    Row(
-                                      children: [
-                                        GestureDetector(
-                                          onTap: () {
-                                            _navigateToSettingsPage(context);
-                                          },
-                                          child: Icon(
-                                            Icons.settings,
-                                            color: Colors.blue,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: 20),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          _navigateToSettingsPage(context);
-                                        },
-                                        child: Container(
-                                          height: 100,
-                                          decoration: BoxDecoration(
-                                            color: Colors.blue[600],
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          child: Column(
-                                            mainAxisAlignment: MainAxisAlignment.end,
-                                            children: [
-                                              IconButton(
-                                                onPressed: () {
-                                                  _navigateToSettingsPage(context);
-                                                },
-                                                icon: Icon(Icons.settings, color: Colors.white),
-                                              ),
-                                              SizedBox(height: 10),
-                                              Text(
-                                                'Settings',
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(width: 6),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+                    
                     SizedBox(height: 20),
                     // Customize Tile
                     GestureDetector(
@@ -590,14 +403,16 @@ class _HomePageState extends State<HomePage> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 30, vertical: 50),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 30, vertical: 50),
                           child: Align(
                             alignment: Alignment.topLeft,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
                                       'Customize',
@@ -633,16 +448,20 @@ class _HomePageState extends State<HomePage> {
                                           height: 100,
                                           decoration: BoxDecoration(
                                             color: Colors.blue[600],
-                                            borderRadius: BorderRadius.circular(12),
+                                            borderRadius:
+                                                BorderRadius.circular(12),
                                           ),
                                           child: Column(
-                                            mainAxisAlignment: MainAxisAlignment.end,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.end,
                                             children: [
                                               IconButton(
                                                 onPressed: () {
-                                                  _navigateToCustomizePage(context);
+                                                  _navigateToCustomizePage(
+                                                      context);
                                                 },
-                                                icon: Icon(Icons.mic, color: Colors.white),
+                                                icon: Icon(Icons.mic,
+                                                    color: Colors.white),
                                               ),
                                               SizedBox(height: 8),
                                               Text(
@@ -657,40 +476,7 @@ class _HomePageState extends State<HomePage> {
                                         ),
                                       ),
                                     ),
-                                    SizedBox(width: 20),
-                                    Expanded(
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          _navigateToCustomizePage(context);
-                                        },
-                                        child: Container(
-                                          height: 100,
-                                          decoration: BoxDecoration(
-                                            color: Colors.blue[600],
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          child: Column(
-                                            mainAxisAlignment: MainAxisAlignment.end,
-                                            children: [
-                                              IconButton(
-                                                onPressed: () {
-                                                  _navigateToCustomizePage(context);
-                                                },
-                                                icon: Icon(Icons.local_hospital, color: Colors.white),
-                                              ),
-                                              SizedBox(height: 8),
-                                              Text(
-                                                'Medical Records',
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
+                                    
                                   ],
                                 ),
                               ],

@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "89262715667",
+    "firebase_url": "https://voice-app-37476-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "voice-app-37476",
+    "storage_bucket": "voice-app-37476.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:89262715667:android:d617acecdc933e28ca60e6",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application_3"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCR57iw4_SWNy67Fr7J4JVteowrZjhjul4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

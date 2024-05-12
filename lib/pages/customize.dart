@@ -1,6 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
-import 'package:flutter/services.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+class EmergencyPhrase {
+  String phrase;
+
+  EmergencyPhrase(this.phrase);
+
+  Map<String, dynamic> toMap() {
+    return {
+      'phrase': phrase,
+    };
+  }
+}
 
 class Register extends StatefulWidget {
   const Register({Key? key});
@@ -10,13 +22,35 @@ class Register extends StatefulWidget {
 }
 
 class _RegisterState extends State<Register> {
-  final stt.SpeechToText _speech = stt.SpeechToText(); // Initialize speech recognition instance
-  String _spokenPhrase = ''; // Variable to store spoken phrase
-  String _enteredPhrase = ''; // Variable to store entered phrase
+  final stt.SpeechToText _speech = stt.SpeechToText();
+  String _spokenPhrase = '';
+  String _enteredPhrase = '';
 
   bool _showMicrophoneButton = false;
   bool _phrasesMatch = false;
   bool _showUpdateButton = false;
+
+  void _savePhrase(String phrase) async {
+    await FirebaseFirestore.instance.collection('Phrase').add(
+      EmergencyPhrase(phrase).toMap(),
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Phrase updated successfully.'),
+      ),
+    );
+  }
+
+  void _deletePhrase(String id) async {
+    await FirebaseFirestore.instance.collection('Phrase').doc(id).delete();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Phrase deleted successfully.'),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -179,62 +213,97 @@ class _RegisterState extends State<Register> {
                 ),
               ),
               if (_phrasesMatch && _showUpdateButton)
-              Column(
-    children: [
-      SizedBox(height: 10), // Display the update button if phrases match and the button is enabled
-                SizedBox(
-                  width: 200,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // Handle update logic
-                    },
-                    style: ButtonStyle(
-                      foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
-                      backgroundColor: MaterialStateProperty.all<Color>(Colors.purple),
-                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24.0),
+                Column(
+                  children: [
+                    SizedBox(height: 10), // Display the update button if phrases match and the button is enabled
+                    SizedBox(
+                      width: 200,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          _savePhrase(_spokenPhrase);
+                        },
+                        style: ButtonStyle(
+                          foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+                          backgroundColor: MaterialStateProperty.all<Color>(Colors.purple),
+                          shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                            RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(24.0),
+                            ),
+                          ),
+                        ),
+                        child: const Padding(
+                          padding: EdgeInsets.all(10.0),
+                          child: Text(
+                            'Update',
+                            style: TextStyle(fontSize: 16),
+                          ),
                         ),
                       ),
                     ),
-                    child: const Padding(
-                      padding: EdgeInsets.all(10.0),
-                      child: Text(
-                        'Update',
-                        style: TextStyle(fontSize: 16),
-                      ),
-                    ),
-                  ),
+                  ],
                 ),
+              const SizedBox(height: 20),
+              const Text(
+                'Saved Phrases',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Expanded(
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance.collection('Phrase').snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) {
+                      final phrases = snapshot.data!.docs;
+                      return ListView.builder(
+                        itemCount: phrases.length,
+                        itemBuilder: (context, index) {
+                          final phrase = phrases[index].data() as Map<String, dynamic>;
+                          final id = phrases[index].id;
+                          return ListTile(
+                            title: Text(phrase['phrase'] ?? 'No Phrase'),
+                            trailing: IconButton(
+                              icon: Icon(Icons.delete),
+                              onPressed: () {
+                                _deletePhrase(id);
+                              },
+                            ),
+                          );
+                        },
+                      );
+                    } else {
+                      return SizedBox();
+                    }
+                  },
+                ),
+              ),
             ],
           ),
-        ],
         ),
       ),
-    ),
     );
-
   }
 
-void startListening() async {
-  if (!_speech.isListening) {
-    bool available = await _speech.initialize();
-    if (available) {
-      _speech.listen(
-        onResult: (result) {
-          setState(() {
-            _spokenPhrase = result.recognizedWords;
-            // Check if the spoken phrase matches the entered text
-            _phrasesMatch = _enteredPhrase.trim().toLowerCase() == _spokenPhrase.trim().toLowerCase();
-            // Enable the update button when the phrases match
-            _showUpdateButton = _phrasesMatch;
-          });
-          // Print the recognized text to the terminal
-          print('Recognized Text: $_spokenPhrase');
-        },
-      );
+  void startListening() async {
+    if (!_speech.isListening) {
+      bool available = await _speech.initialize();
+      if (available) {
+        _speech.listen(
+          onResult: (result) {
+            setState(() {
+              _spokenPhrase = result.recognizedWords;
+              // Check if the spoken phrase matches the entered text
+              _phrasesMatch = _enteredPhrase.trim().toLowerCase() == _spokenPhrase.trim().toLowerCase();
+              // Enable the update button when the phrases match
+              _showUpdateButton = _phrasesMatch;
+            });
+            // Print the recognized text to the terminal
+            print('Recognized Text: $_spokenPhrase');
+          },
+        );
+      }
     }
   }
-}
-
 }
