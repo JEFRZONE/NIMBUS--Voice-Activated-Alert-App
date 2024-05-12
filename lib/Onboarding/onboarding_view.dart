@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_3/Components/color.dart';
 import 'package:flutter_application_3/Onboarding/onboarding_items.dart';
 import 'package:flutter_application_3/home.dart';
 import 'package:shared_preferences/shared_preferences.dart';

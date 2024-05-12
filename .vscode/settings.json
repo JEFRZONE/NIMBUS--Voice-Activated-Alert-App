@@ -1,3 +1,4 @@
 {
-    "java.configuration.updateBuildConfiguration": "automatic"
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "cmake.sourceDirectory": "C:/flutter/trial/flutter_application_3/build/windows/x64/_deps/nuget-subbuild"
 }
