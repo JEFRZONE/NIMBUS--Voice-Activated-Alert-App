@@ -10,8 +10,21 @@ import 'package:flutter_tts/flutter_tts.dart'; // Import for text-to-speech
 import 'package:speech_to_text/speech_recognition_result.dart'; // Import for speech recognition result
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_background_service_android/flutter_background_service_android.dart';
+import 'package:flutter_background_service/flutter_background_service.dart'
+    show
+        AndroidConfiguration,
+        FlutterBackgroundService,
+        IosConfiguration,
+        ServiceInstance;
 
-
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  
+  runApp(HomePage());
+}
 class HomePage extends StatefulWidget {
   @override
   _HomePageState createState() => _HomePageState();
@@ -21,10 +34,31 @@ class _HomePageState extends State<HomePage> {
   final SpeechToText _speechToText = SpeechToText();
   String _lastWords = '';
   String _currentLocation = 'Locating...';
-  String _cityName = ''; // Add state variable for city name
+  String _cityName = '';
+   String _userName = ''; // Add state variable for city name
   
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+Future<void> _fetchUserName() async {
+  try {
+    // Query the "users" collection to get the user's document
+    QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('users').get();
+    if (snapshot.docs.isNotEmpty) {
+      // If documents exist in the collection, retrieve the first document's data
+      setState(() {
+        var userData = snapshot.docs.first.data() as Map<String, dynamic>?; // Cast userData to Map<String, dynamic>
+        if (userData != null && userData.containsKey('name')) {
+          // Check if 'name' field exists and is not null
+          _userName = userData['name']!;
+          print('username is:$_userName');
+        }
+      });
+    }
+  } catch (e) {
+    print('Error fetching user name: $e');
+  }
+}
 
   Future<void> _getCurrentLocation() async {
     try {
@@ -105,7 +139,7 @@ class _HomePageState extends State<HomePage> {
       MaterialPageRoute(builder: (context) => Register()),
     );
   }
-bool _isListening = false; // Add a flag to track if voice recognition is active
+/*bool _isListening = false; // Add a flag to track if voice recognition is active
 
 void _triggerVoiceRecognition() {
   if (!_isListening) {
@@ -142,19 +176,22 @@ void _stopListening() async {
     _stopListening();
     flutterTts.speak("Stopped");
   }
-}
+}*/
 
   @override
   void initState() {
     super.initState();
-    _getCurrentLocation(); // Fetch location on app launch
+    _getCurrentLocation(); 
+    FlutterBackgroundService()
+        .invoke("setAsBackground");
+        _fetchUserName();  
 
-    _initSpeech(); // Initialize speech recognition
+    //_initSpeech(); // Initialize speech recognition
   }
 
-  Future<void> _initSpeech() async {
+  /*Future<void> _initSpeech() async {
     await _speechToText.initialize(); // Initialize speech recognition
-  }
+  }*/
 
   @override
   Widget build(BuildContext context) {
@@ -176,7 +213,7 @@ void _stopListening() async {
                         Row(
                           children: [
                             Text(
-                              '   Hi, Jefrin',
+                              '   Hi, $_userName',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 24,
@@ -208,15 +245,25 @@ void _stopListening() async {
                       ],
                     ),
                     GestureDetector(
-                      onTap:
-                          _triggerVoiceRecognition, // Start voice recognition when mic button is tapped
+                      onTap: () async {
+                        final service = FlutterBackgroundService();
+                        // final service = widget.appStateService.service;
+                        var isRunning = await service.isRunning();
+                        if (isRunning) {
+                          service.invoke("stopService");
+                          print('not running backgrouund');
+                        } else {
+                          service.startService();
+                        }
+                        setState(() {});
+                      }, // Start voice recognition when mic button is tapped
                       child: Container(
                         decoration: BoxDecoration(
                           color: Colors.blue[600],
                           borderRadius: BorderRadius.circular(200),
                         ),
-                        padding: EdgeInsets.all(10),
-                        child: Icon(
+                        padding: const EdgeInsets.all(10),
+                        child: const Icon(
                           Icons.mic,
                           color: Colors.white,
                           size: 40,

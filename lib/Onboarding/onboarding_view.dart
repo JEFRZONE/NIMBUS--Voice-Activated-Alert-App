@@ -3,6 +3,7 @@ import 'package:flutter_application_3/Onboarding/onboarding_items.dart';
 import 'package:flutter_application_3/home.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:flutter_application_3/login.dart';
 
 class OnboardingView extends StatefulWidget {
   const OnboardingView({super.key}); 
@@ -128,7 +129,7 @@ class _OnboardingViewState extends State<OnboardingView> {
             //After we press get started button this onboarding value become true
             // same key
             if(!mounted)return;
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>HomePage()));
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>Login()));
           },
           child: const Text("Get started",style: TextStyle(color: Colors.white),)),
     );
