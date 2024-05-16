@@ -2,7 +2,7 @@
     package="com.example.smk.voice_background">
 
 <application
-        android:label="flutter_application_3"
+        android:label="Nimbus"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:enableOnBackInvokedCallback="true">

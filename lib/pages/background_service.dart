@@ -12,12 +12,21 @@ import 'package:speech_to_text/speech_to_text.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class BackgroundService {
-  
+
   static bool _speechEnabled = false;
   static String _lastWords = "Say something";
 
+  static final SpeechToText _speechToText = SpeechToText();
+  static List<String>? _phrases;
+
   static Future<void> initializeService(List<String>? phrases) async {
-    _initSpeech(phrases);
+    // Save phrases to shared preferences
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (phrases != null) {
+      await prefs.setStringList('phrases', phrases);
+    }
+    _phrases = prefs.getStringList('phrases');
+    
     await FlutterBackgroundService().configure(
       androidConfiguration: AndroidConfiguration(
         onStart: onStart,
@@ -31,9 +40,6 @@ class BackgroundService {
       ),
     );
     await FlutterBackgroundService().startService();
-    // Save phrases to shared preferences
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  await prefs.setStringList('phrases', _phrases ?? []);
   }
 
   static bool onIosBackground(ServiceInstance service) {
@@ -44,7 +50,6 @@ class BackgroundService {
 
   static void onStart(ServiceInstance service) async {
     DartPluginRegistrant.ensureInitialized();
-    _initSpeech(_phrases);
 
     if (service is AndroidServiceInstance) {
       service.on('setAsForeground').listen((event) {
@@ -59,6 +64,11 @@ class BackgroundService {
     service.on('stopService').listen((event) {
       service.stopSelf();
     });
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    _phrases = prefs.getStringList('phrases');
+
+    _initSpeech();
 
     Timer.periodic(const Duration(seconds: 3), (timer) async {
       if (service is AndroidServiceInstance) {
@@ -84,13 +94,9 @@ class BackgroundService {
     });
   }
 
-  static final SpeechToText _speechToText = SpeechToText();
-  static List<String>? _phrases;
-  static Future<void> _initSpeech(List<String>? phrases) async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  _phrases = prefs.getStringList('phrases') ?? phrases;
-  _speechEnabled = await _speechToText.initialize();
-}
+  static Future<void> _initSpeech() async {
+    _speechEnabled = await _speechToText.initialize();
+  }
 
   static void _startListening() async {
     await _speechToText.listen(onResult: _onSpeechResult);
@@ -100,20 +106,19 @@ class BackgroundService {
     await _speechToText.stop();
   }
 
+  static String serverIp = '192.168.218.190'; // Replace with your PC's IP address
+  static int serverPort = 12345;
 
- static String serverIp = '192.168.35.148'; // Replace with your PC's IP address
- static int serverPort = 12345;
- 
   static Future<void> triggerPythonScript() async {
-  try {
-    Socket socket = await Socket.connect(serverIp, serverPort);
-    print('Connected to server');
-    socket.write('Run Python Script');
-    await socket.flush();
-    socket.close();
-  } catch (e) {
-    print('Error connecting to server: $e');
-  }
+    try {
+      Socket socket = await Socket.connect(serverIp, serverPort);
+      print('Connected to server');
+      socket.write('Run Python Script');
+      await socket.flush();
+      socket.close();
+    } catch (e) {
+      print('Error connecting to server: $e');
+    }
   }
 
   static Future<void> _onSpeechResult(SpeechRecognitionResult result) async {
@@ -136,9 +141,6 @@ class BackgroundService {
         }
         if (phraseMatched) {
           print('Phrase matched!');
-        }
-
-        if (phraseMatched) {
           triggerPythonScript();
           flutterTts.speak("We are sending help");
         } else if (_lastWords.contains('stop')) {
