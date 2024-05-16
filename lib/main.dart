@@ -43,6 +43,7 @@ Future<List<String>> fetchPhrasesFromFirestore() async {
   try {
     QuerySnapshot querySnapshot = await _firestore.collection('Phrase').get();
     List<String> phrases = querySnapshot.docs.map((doc) => (doc.data() as Map<String, dynamic>)['phrase'].toString()).toList();
+    print('Passed phrases: $phrases');
     return phrases;
   } catch (e) {
     print('Error fetching phrases: $e');

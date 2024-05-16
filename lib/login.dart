@@ -25,12 +25,9 @@ class Login extends StatefulWidget {
 class _LoginState extends State<Login> {
   final stt.SpeechToText _speech = stt.SpeechToText();
   String _spokenPhrase = '';
-  String _enteredPhrase = '';
   String _name = '';
 
   bool _showMicrophoneButton = false;
-  bool _phrasesMatch = false;
-  bool _showUpdateButton = false;
 
   void _savePhrase(String phrase) async {
     await FirebaseFirestore.instance.collection('Phrase').add(
@@ -118,34 +115,6 @@ class _LoginState extends State<Login> {
                 const SizedBox(
                   height: 28,
                 ),
-                if (_showMicrophoneButton)
-                  Container(
-                    padding: const EdgeInsets.all(28),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(40),
-                    ),
-                    child: Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.mic),
-                          onPressed: () {
-                            // Start listening for speech when microphone button is pressed
-                            startListening();
-                          },
-                        ),
-                        const SizedBox(width: 10), // Add spacing between the icon and text
-                        const Text(
-                          'Speak the phrase verbally',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                const SizedBox(height: 10), // Add spacing before the text field
                 Container(
                   padding: const EdgeInsets.all(28),
                   decoration: BoxDecoration(
@@ -204,10 +173,8 @@ class _LoginState extends State<Login> {
                           ),
                         ),
                         onChanged: (value) {
-                          // Compare the entered text with the spoken phrase when text changes
                           setState(() {
-                            _enteredPhrase = value;
-                            _phrasesMatch = _enteredPhrase.trim().toLowerCase() == _spokenPhrase.trim().toLowerCase();
+                            _spokenPhrase = value;
                           });
                         },
                       ),
@@ -218,9 +185,7 @@ class _LoginState extends State<Login> {
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: () {
-                            setState(() {
-                              _showMicrophoneButton = true;
-                            });
+                            _savePhrase(_spokenPhrase);
                           },
                           style: ButtonStyle(
                             foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
@@ -234,7 +199,7 @@ class _LoginState extends State<Login> {
                           child: const Padding(
                             padding: EdgeInsets.all(14.0),
                             child: Text(
-                              'Add text phrase',
+                              'Add phrase',
                               style: TextStyle(fontSize: 16),
                             ),
                           ),
@@ -271,60 +236,11 @@ class _LoginState extends State<Login> {
                     ],
                   ),
                 ),
-                if (_phrasesMatch && _showUpdateButton)
-                  Column(
-                    children: [
-                      SizedBox(height: 10), // Display the update button if phrases match and the button is enabled
-                      SizedBox(
-                        width: 200,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            _savePhrase(_spokenPhrase);
-                          },
-                          style: ButtonStyle(
-                            foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
-                            backgroundColor: MaterialStateProperty.all<Color>(Colors.purple),
-                            shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                              RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(24.0),
-                              ),
-                            ),
-                          ),
-                          child: const Padding(
-                            padding: EdgeInsets.all(10.0),
-                            child: Text(
-                              'Update',
-                              style: TextStyle(fontSize: 16),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
               ],
             ),
           ),
         ),
       ),
     );
-  }
-
-  void startListening() async {
-    final bool available = await _speech.initialize();
-    if (available) {
-      _speech.listen(
-        onResult: (result) {
-          setState(() {
-            _spokenPhrase = result.recognizedWords;
-            // Check if the spoken phrase matches the entered text
-            _phrasesMatch = _enteredPhrase.trim().toLowerCase() == _spokenPhrase.trim().toLowerCase();
-            // Enable the update button when the phrases match
-            _showUpdateButton = _phrasesMatch;
-          });
-          // Print the recognized text to the terminal
-          print('Recognized Text: $_spokenPhrase');
-        },
-      );
-    }
   }
 }

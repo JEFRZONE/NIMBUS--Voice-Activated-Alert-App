@@ -111,7 +111,7 @@ Future<void> _fetchUserName() async {
   }
 }
 
-  final String serverIp = '192.168.1.12'; // Replace with your PC's IP address
+  final String serverIp = '192.168.218.190'; // Replace with your PC's IP address
   final int serverPort = 12345;
   Future<void> triggerPythonScript() async {
     try {
@@ -139,44 +139,6 @@ Future<void> _fetchUserName() async {
       MaterialPageRoute(builder: (context) => Register()),
     );
   }
-/*bool _isListening = false; // Add a flag to track if voice recognition is active
-
-void _triggerVoiceRecognition() {
-  if (!_isListening) {
-    _startListening(); // Start voice recognition only if not already listening
-  } else {
-    _stopListening(); // Stop voice recognition if already listening
-  }
-}
-
-void _startListening() async {
-  setState(() {
-    _isListening = true; // Set the flag to indicate that voice recognition is active
-  });
-  await _speechToText.listen(
-    onResult: _onSpeechResult,
-    listenFor: Duration(seconds: 0), // Listen indefinitely until stopped
-  );
-}
-
-void _stopListening() async {
-  setState(() {
-    _isListening = false; // Set the flag to indicate that voice recognition is inactive
-  });
-  await _speechToText.stop();
-}
-
-  void _onSpeechResult(SpeechRecognitionResult result) async {
-  var flutterTts = FlutterTts();
-  _lastWords = result.recognizedWords.toString().toLowerCase();
-
-  if (_lastWords.contains("hello") || _lastWords.contains('help')) {
-    flutterTts.speak("We are sending help");
-  } else if (_lastWords.contains('stop')) {
-    _stopListening();
-    flutterTts.speak("Stopped");
-  }
-}*/
 
   @override
   void initState() {
@@ -189,9 +151,7 @@ void _stopListening() async {
     //_initSpeech(); // Initialize speech recognition
   }
 
-  /*Future<void> _initSpeech() async {
-    await _speechToText.initialize(); // Initialize speech recognition
-  }*/
+
 
   @override
   Widget build(BuildContext context) {

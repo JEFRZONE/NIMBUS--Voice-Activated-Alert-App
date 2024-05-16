@@ -40,6 +40,12 @@ class _RegisterState extends State<Register> {
         content: Text('Phrase updated successfully.'),
       ),
     );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Restart the App to reflect the changes'),
+      ),
+    );
   }
 
   void _deletePhrase(String id) async {
@@ -48,6 +54,12 @@ class _RegisterState extends State<Register> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Phrase deleted successfully.'),
+      ),
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Restart the App to reflect the changes'),
       ),
     );
   }
