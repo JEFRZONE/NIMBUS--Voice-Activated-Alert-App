@@ -1,6 +1,6 @@
 # NIMBUS
 
-VOICE ALERTED EMERGENCY ALERT APP
+VOICE ACTIVATED EMERGENCY ALERT APP
 
 The Voice-Activated Emergency Alert App is a tool designed to empower and protect women by seamlessly integrating voice
 activation technology into an emergency alert system. This app ensures discreet and swift
