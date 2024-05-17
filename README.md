@@ -12,9 +12,7 @@ operates in the background, ready to respond instantly when needed. This ensures
 users do not have to fumble with their phones or open the app in potentially dangerous
 situations. The discrete nature of the voice activation mechanism enhances user safety by
 minimizing the risk of detection. Users have the flexibility to customize their emergency
-contacts and settings based on their preferences. The app can automatically alert selected
-contacts or the nearest police station, providing a personalized and efficient response to
-different safety scenarios. In case of activation, the app sends automated alert messages to
+contacts and settings based on their preferences.In case of activation, the app sends automated alert messages to
 chosen contacts, informing them of the user’s dangerous situation. The message includes
 the user’s GPS location, enabling swift assistance and ensuring that help reaches them
 precisely where it is needed. The App addresses the critical need for discretion and speed
