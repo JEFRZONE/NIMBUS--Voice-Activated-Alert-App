@@ -27,20 +27,26 @@ Onboarding Page
 ![onboard](https://github.com/JEFRZONE/NIMBUS--Voice-Activated-Alert-App/assets/65282953/87b0da99-eae5-4b7f-8763-6e5aa13a6c52)
 <br/>
 
-![Sign In](https://github.com/JEFRZONE/NIMBUS--Voice-Activated-Alert-App/assets/65282953/4485dd2c-97d5-452d-9eaf-449887150bda)
 Sign In
 
-![Sign Up](https://github.com/JEFRZONE/NIMBUS--Voice-Activated-Alert-App/assets/65282953/c9a044c2-f046-4864-9b10-a9c18669d405)
+![Sign In](https://github.com/JEFRZONE/NIMBUS--Voice-Activated-Alert-App/assets/65282953/4485dd2c-97d5-452d-9eaf-449887150bda)
+<br/>
 Sign Up
 
-![main](https://github.com/JEFRZONE/NIMBUS--Voice-Activated-Alert-App/assets/65282953/2fa96a08-44fe-494b-90f0-7195c76091e6)
+![Sign Up](https://github.com/JEFRZONE/NIMBUS--Voice-Activated-Alert-App/assets/65282953/c9a044c2-f046-4864-9b10-a9c18669d405)
+<br/>
 Main Page
 
-![phrase](https://github.com/JEFRZONE/NIMBUS--Voice-Activated-Alert-App/assets/65282953/e756ffbf-ba38-4167-81a1-3e13c5c694da)
+![main](https://github.com/JEFRZONE/NIMBUS--Voice-Activated-Alert-App/assets/65282953/2fa96a08-44fe-494b-90f0-7195c76091e6)
+<br/>
 Phrase Updation Page
 
-![contacts1](https://github.com/JEFRZONE/NIMBUS--Voice-Activated-Alert-App/assets/65282953/67674f9e-b4a3-4ce6-a783-30bdb6cb1b63)
+![phrase](https://github.com/JEFRZONE/NIMBUS--Voice-Activated-Alert-App/assets/65282953/e756ffbf-ba38-4167-81a1-3e13c5c694da)
+<br/>
 Contacts Page
+
+![contacts1](https://github.com/JEFRZONE/NIMBUS--Voice-Activated-Alert-App/assets/65282953/67674f9e-b4a3-4ce6-a783-30bdb6cb1b63)
+
 
 
 
