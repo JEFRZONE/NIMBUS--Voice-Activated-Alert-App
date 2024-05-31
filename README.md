@@ -23,6 +23,7 @@ The Voice-Activated Emergency Alert App is designed to empower and protect women
 ## ScreenShots
 <br/>
 Onboarding Page
+
 ![onboard](https://github.com/JEFRZONE/NIMBUS--Voice-Activated-Alert-App/assets/65282953/87b0da99-eae5-4b7f-8763-6e5aa13a6c52)
 <br/>
 
