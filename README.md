@@ -20,7 +20,7 @@ The Voice-Activated Emergency Alert App is designed to empower and protect women
 2. The app runs in the background, ready to be activated by your predefined code or phrase in case of an emergency.
 3. Upon activation, automated alert messages with your GPS location are sent to your chosen contacts.
 
-##ScreenShots
+## ScreenShots
 ![onboard](https://github.com/JEFRZONE/NIMBUS--Voice-Activated-Alert-App/assets/65282953/87b0da99-eae5-4b7f-8763-6e5aa13a6c52)
 
 ![main](https://github.com/JEFRZONE/NIMBUS--Voice-Activated-Alert-App/assets/65282953/2fa96a08-44fe-494b-90f0-7195c76091e6)
