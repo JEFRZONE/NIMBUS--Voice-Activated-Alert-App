@@ -45,10 +45,7 @@ Phrase Updation Page
 <br/>
 Contacts Page
 
-![contacts1](https://github.com/JEFRZONE/NIMBUS--Voice-Activated-Alert-App/assets/65282953/67674f9e-b4a3-4ce6-a783-30bdb6cb1b63)
-
-
-
+![Nimbus contacts](https://github.com/JEFRZONE/NIMBUS--Voice-Activated-Alert-App/assets/147239305/435151e3-2afe-4fd9-9088-ec799e52fef2)
 
 
 
